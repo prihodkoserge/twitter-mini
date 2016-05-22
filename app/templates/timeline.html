@@ -1,15 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Timeline</title>
-</head>
-<body>
-    {% for post in timeline %}
-        <p>
-            {{ post.user.username }}:
-            {{ post.content }}
-        </p>
-    {% endfor %}
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="jumbotron">
+                <h1>Timeline</h1>
+            </div>
+            <div class="col-md-12 col-sm-12">
+                {% for post in timeline %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            {{ post.user.username }} on {{ post.timestamp.strftime('%B %d %Y - %H:%M:%S') }}
+                        </div>
+                        <div class="panel-body">
+                            {{ post.content }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        .
+    </div>
+{% endblock %}
