@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Timeline</title>
+</head>
+<body>
+    {% for post in timeline %}
+        <p>
+            {{ post.user.username }}:
+            {{ post.content }}
+        </p>
+    {% endfor %}
+</body>
+</html>
