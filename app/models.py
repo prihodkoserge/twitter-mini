@@ -92,8 +92,17 @@ class Timeline(object):
             return PublicTimeline()
 
 
+class TimelineInterface():
+
+    def posts(self):
+        raise NotImplementedError
+
+    def sort(self):
+        raise NotImplementedError
+
+
 # Product
-class UserTimeline():
+class UserTimeline(TimelineInterface):
     def __init__(self, user_id):
         self.user = User.query.get(user_id)
 
@@ -102,6 +111,6 @@ class UserTimeline():
 
 
 # Product
-class PublicTimeline():
+class PublicTimeline(TimelineInterface):
     def posts(self):
-        return [post for post in Post.query.all()];
+        return [post for post in Post.query.all()]
