@@ -86,9 +86,19 @@ class UploadedFile(db.Model):
 class Wall:
     def __init__(self, user):
         self.user = user
+        self._followers = Follower.query.filter_by(whom_id=user.id)
 
     def posts(self):
         return [post for post in self.user.posts]
+
+    def add_follower(self, follower):
+        if follower is None:
+            raise AssertionError
+        f = Follower(self.user.id, follower.id)
+        db.session.add(f)
+        db.session.commit()
+
+
 
 
 # Factory

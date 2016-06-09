@@ -10,8 +10,7 @@
                 <div class="panel panel-default">
                     <ul class="nav nav-pills nav-stacked">
                         <li role="presentation"><a href="/">Home</a></li>
-                        <li role="presentation"><a href="/">Profile</a></li>
-                        <li role="presentation"><a href="/">Wall</a></li>
+                        <li role="presentation"><a href="/wall">Wall</a></li>
                     </ul>
                 </div>
             </div>
@@ -42,16 +41,20 @@
                         </button>
                     </div>
                 </form>
+
                 {% for post in timeline %}
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            {{ post.user.username }} on {{ post.timestamp.strftime('%B %d %Y - %H:%M:%S') }}
+                            <a href="{{ url_for('wall', username=post.user.username) }}">
+                                {{ post.user.username }} on {{ post.timestamp.strftime('%B %d %Y - %H:%M:%S') }}
+                            </a>
                         </div>
                         <div class="panel-body">
                             {{ post.content }}
                         </div>
                     </div>
                 {% endfor %}
+
             </div>
         </div>
         .

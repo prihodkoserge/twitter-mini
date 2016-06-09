@@ -1,17 +1,19 @@
 import os
 from datetime import datetime
 from config import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
+from werkzeug.utils import secure_filename
+
 from app import app, db
 from app import forms
-from flask import render_template, request, abort
-from werkzeug.utils import secure_filename
 from app.models import *
 from app.auth.decorator import CheckAuthDecorator
 from app.auth.strategies import HttpBasicAuthenticationStrategy
 
+from flask import render_template, request, g, \
+                    abort, redirect, url_for, flash
+
 
 basic_auth = HttpBasicAuthenticationStrategy()
-requires_auth = CheckAuthDecorator(auth_strategy=basic_auth)
 
 
 def allowed_file(filename):
@@ -52,8 +54,30 @@ def wall(username):
     user = User.get_user_by_username(username)
     if user is None:
         abort(404)
+
+    curr_user = basic_auth.check_auth(request)
+
     return render_template(
         "wall.html",
-        wall=Wall(user)
+        wall=Wall(user),
+        curr_user=curr_user.username
     )
 
+
+@app.route('/wall')
+@CheckAuthDecorator(auth_strategy=basic_auth)
+def curr_user_wall():
+    curr_user = basic_auth.check_auth(request)
+    return redirect(url_for('wall', username=g.user.username))
+
+
+@app.route('/<username>/follow')
+@CheckAuthDecorator(auth_strategy=basic_auth)
+def follow_user(username):
+    return
+
+
+@app.route('/<username>/unfollow')
+@CheckAuthDecorator(auth_strategy=basic_auth)
+def unfollow_user(username):
+    return

@@ -1,4 +1,5 @@
 from app.models import User
+from flask import g
 # from werkzeug.contrib import
 
 class AuthenticationStrategy(object):
@@ -13,6 +14,8 @@ class HttpBasicAuthenticationStrategy(AuthenticationStrategy):
             return False
         user = User.query.filter_by(email=auth_data.username).first()
         if user is not None and user.check_password(auth_data.password):
+            if not hasattr(g, 'user'):
+                g.user = user
             return user
         return False
 
