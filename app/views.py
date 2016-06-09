@@ -1,15 +1,17 @@
 import os
-from flask import render_template, request, Response
-from werkzeug.utils import secure_filename
-from app import app
+from datetime import datetime
 from config import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
-from app.models import Timeline
+from app import app, db
 from app import forms
-from functools import wraps
+from flask import render_template, request, abort
+from werkzeug.utils import secure_filename
+from app.models import *
+from app.auth.decorator import CheckAuthDecorator
 from app.auth.strategies import HttpBasicAuthenticationStrategy
 
 
 basic_auth = HttpBasicAuthenticationStrategy()
+requires_auth = CheckAuthDecorator(auth_strategy=basic_auth)
 
 
 def allowed_file(filename):
@@ -17,49 +19,41 @@ def allowed_file(filename):
             filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-def check_auth(username, password):
-    return username=='aaa' and password=='bbb'
+@app.route('/', methods=["GET", "POST"])
+@CheckAuthDecorator(auth_strategy=basic_auth)
+def index():
+    tweet_form = forms.TweetForm()
+    if tweet_form.validate_on_submit():
+        author = basic_auth.check_auth(request)
 
+        if author:
+            post = Post(datetime.utcnow(), tweet_form.tweet_content.data)
 
-def authenticate():
-    return Response(
-        'Could not verify your access level for that URL', 401,
-        {'WWW-Authenticate': 'Basic realm="Login Required'}
+            if tweet_form.attachment.data:
+                uploaded_file = request.files[tweet_form.attachment.name]
+                if allowed_file(uploaded_file.filename):
+                    filename = secure_filename(uploaded_file.filename)
+                    uploaded_file.save(os.path.join(UPLOAD_FOLDER, filename))
+                    post.files.append(UploadedFile(filename=filename))
+
+            author.posts.append(post)
+            db.session.commit()
+
+    return render_template(
+        "timeline.html",
+        timeline=Timeline.get().posts(),
+        tweet_form=forms.TweetForm()
     )
 
 
-# Decorator
-# Wraps view method and decorate it
-# with adding authentication requirements
+@app.route('/<username>')
+@CheckAuthDecorator(auth_strategy=basic_auth)
+def wall(username):
+    user = User.get_user_by_username(username)
+    if user is None:
+        abort(404)
+    return render_template(
+        "wall.html",
+        wall=Wall(user)
+    )
 
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not basic_auth.check_auth(request):
-            return authenticate()
-        return f(*args, **kwargs)
-    return decorated
-
-
-@app.route('/', methods=["GET", "POST"])
-@requires_auth
-def index():
-    tweet_form = forms.TweetForm(request.form)
-    if tweet_form.is_submitted():
-        print("Submitter")
-    return render_template("timeline.html",
-                           timeline=Timeline.get().posts(),
-                           tweet_form=forms.TweetForm()
-                           )
-
-
-@app.route("/up", methods=["GET", "POST"])
-def upload():
-    args = {"method": "GET"}
-    if request.method == "POST":
-        file = request.files["file"]
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
-            args["method"] = "POST"
-    return render_template("upload.html", args=args, tweet_form=forms.TweetForm)

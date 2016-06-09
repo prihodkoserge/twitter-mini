@@ -20,7 +20,12 @@ class User(db.Model):
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
-        return check_password_hash(self.password, password)
+        # return check_password_hash(self.password, password)
+        return self.password == password
+
+    @staticmethod
+    def get_user_by_username(username):
+        return User.query.filter_by(username=username).first()
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -32,11 +37,10 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     files = db.relationship('UploadedFile', backref='post', lazy='dynamic')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    def __init__(self, user_id, timestamp, content):
-        self.user_id = user_id
+    def __init__(self, timestamp, content):
         self.timestamp = timestamp
         self.content = content
 
@@ -44,7 +48,7 @@ class Post(db.Model):
         return {
             'id': self.id,
             'content': self.content,
-            'user_id': self.user_id,
+            'user_id': self.user.id,
             'timestamp': self.timestamp
         }
 
@@ -73,13 +77,18 @@ class UploadedFile(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     filename = db.Column(db.String(255), unique=True)
 
-    def __init__(self, user_id, post_id, filename):
-        self.user_id = user_id
-        self.post_id = post_id
+    def __init__(self, filename):
         self.filename = filename
+
+
+class Wall:
+    def __init__(self, user):
+        self.user = user
+
+    def posts(self):
+        return [post for post in self.user.posts]
 
 
 # Factory

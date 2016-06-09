@@ -1,4 +1,5 @@
 from app.models import User
+# from werkzeug.contrib import
 
 class AuthenticationStrategy(object):
     def check_auth(self, request):
@@ -12,7 +13,7 @@ class HttpBasicAuthenticationStrategy(AuthenticationStrategy):
             return False
         user = User.query.filter_by(email=auth_data.username).first()
         if user is not None and user.check_password(auth_data.password):
-            return True
+            return user
         return False
 
 
