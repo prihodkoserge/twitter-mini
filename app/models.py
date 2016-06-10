@@ -87,6 +87,7 @@ class Wall:
     def __init__(self, user):
         self.user = user
         self._followers = Follower.query.filter_by(whom_id=user.id)
+        print(self._followers)
 
     def posts(self):
         return [post for post in self.user.posts]
@@ -97,8 +98,6 @@ class Wall:
         f = Follower(self.user.id, follower.id)
         db.session.add(f)
         db.session.commit()
-
-
 
 
 # Factory
@@ -112,7 +111,6 @@ class Timeline(object):
 
 
 class TimelineInterface():
-
     def posts(self):
         raise NotImplementedError
 
