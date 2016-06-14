@@ -1,6 +1,6 @@
 from app.models import User
+from app.auth_digest import RealmDigestDB as authDB
 from flask import g
-# from werkzeug.contrib import
 
 class AuthenticationStrategy(object):
     def check_auth(self, request):
@@ -21,6 +21,5 @@ class HttpBasicAuthenticationStrategy(AuthenticationStrategy):
 
 
 class HttpDigestAuthenticationStrategy(AuthenticationStrategy):
-    def __init__(self):
+    def check_auth(self, request):
         return
-

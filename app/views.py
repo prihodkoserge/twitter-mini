@@ -2,14 +2,16 @@ import os
 from datetime import datetime
 from config import ALLOWED_EXTENSIONS, UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
-from app import app, db
-from app import forms
+from app import app, db, forms
 from app.models import *
+from app.timeline import *
+from app.app_facade import AppFacade
 from app.auth.decorator import CheckAuthDecorator
 from app.auth.strategies import HttpBasicAuthenticationStrategy
 from flask import render_template, request, g, \
                     abort, redirect, url_for, flash
 
+app_facade = AppFacade()
 
 basic_auth = HttpBasicAuthenticationStrategy()
 
@@ -32,13 +34,16 @@ def index():
                 if allowed_file(uploaded_file.filename):
                     filename = secure_filename(uploaded_file.filename)
                     uploaded_file.save(os.path.join(UPLOAD_FOLDER, filename))
-                    post.files.append(UploadedFile(filename=filename))
+                    f = UploadedFile(filename=filename)
+                    db.session.add(f)
+                    post.files.append(f)
             author.posts.append(post)
+            db.session.add(post)
             db.session.commit()
 
     return render_template(
         "timeline.html",
-        timeline=Timeline.get().posts(),
+        timeline=Timeline.get(g.user.id).posts(),
         tweet_form=forms.TweetForm()
     )
 
@@ -74,6 +79,7 @@ def follow_user(username):
     follower = Follower(who_follow.id, whom_follow.id)
     db.session.add(follower)
     db.session.commit()
+    # app_facade.add_follower(follower)
     flash('You are now following "%s"' % username)
     return redirect(url_for('wall', username=username))
 

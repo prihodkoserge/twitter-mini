@@ -31,7 +31,20 @@ class User(db.Model):
         return '<User %r>' % self.username
 
 
-class Post(db.Model):
+
+
+# Composite pattern
+# Allows to represent posts as single entity
+class PostComponent(object):
+    def __init__(self):
+        pass
+
+    def get_dict(self):
+        pass
+
+
+# Post model
+class Post(db.Model, PostComponent):
     __tablename__ = 'post'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -60,6 +73,25 @@ class Post(db.Model):
          ]
 
 
+class PostComposite(PostComponent):
+    def __init__(self, children=None):
+        if children is None:
+            self.__children = []
+        else:
+            self.__children = children
+
+    def append(self, child):
+        self.__children.append(child)
+
+    def remove_child(self, child):
+        self.__children.remove(child)
+
+    def get_dict(self):
+        return [child.get_dict() for child in self.__children]
+
+
+
+# Follower model
 class Follower(db.Model):
     __tablename__ = 'follower'
 
@@ -72,6 +104,9 @@ class Follower(db.Model):
         self.whom_id = whom
 
 
+
+
+# Uploaded file model
 class UploadedFile(db.Model):
     __tablename__ = 'uploaded_file'
 
@@ -81,53 +116,3 @@ class UploadedFile(db.Model):
 
     def __init__(self, filename):
         self.filename = filename
-
-
-class Wall:
-    def __init__(self, user):
-        self.user = user
-        self._followers = Follower.query.filter_by(whom_id=user.id)
-        print(self._followers)
-
-    def posts(self):
-        return [post for post in self.user.posts]
-
-    def add_follower(self, follower):
-        if follower is None:
-            raise AssertionError
-        f = Follower(self.user.id, follower.id)
-        db.session.add(f)
-        db.session.commit()
-
-
-# Factory
-class Timeline(object):
-    @staticmethod
-    def get(user_id=None):
-        if user_id is not None:
-            return UserTimeline(user_id)
-        else:
-            return PublicTimeline()
-
-
-class TimelineInterface():
-    def posts(self):
-        raise NotImplementedError
-
-    def sort(self):
-        raise NotImplementedError
-
-
-# Product
-class UserTimeline(TimelineInterface):
-    def __init__(self, user_id):
-        self.user = User.query.get(user_id)
-
-    def posts(self):
-        return [post for post in self.user.posts]
-
-
-# Product
-class PublicTimeline(TimelineInterface):
-    def posts(self):
-        return [post for post in Post.query.all()]
